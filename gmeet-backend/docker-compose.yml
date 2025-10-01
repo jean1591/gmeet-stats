@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gmeet-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gmeet_user
+      POSTGRES_PASSWORD: gmeet_password
+      POSTGRES_DB: gmeet_stats
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gmeet-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gmeet-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://gmeet_user:gmeet_password@postgres:5432/gmeet_stats?schema=public"
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    networks:
+      - gmeet-network
+    command: >
+      sh -c "npx prisma migrate deploy &&
+             npm run start:prod"
+
+volumes:
+  postgres_data:
+
+networks:
+  gmeet-network:
+    driver: bridge
