@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Meet Time Tracker</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="icons/icon48.png" alt="Meet Tracker" class="logo">
+            <h1>Meet Time Tracker</h1>
+        </div>
+
+        <div class="status-section">
+            <div class="status-indicator">
+                <div id="statusDot" class="status-dot"></div>
+                <span id="statusText">Loading...</span>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <div class="stat-item">
+                <label>Current Session:</label>
+                <span id="currentSession">--</span>
+            </div>
+            <div class="stat-item">
+                <label>Duration:</label>
+                <span id="sessionDuration">--</span>
+            </div>
+            <div class="stat-item">
+                <label>User ID:</label>
+                <span id="userId">--</span>
+            </div>
+        </div>
+
+        <div class="actions-section">
+            <button id="viewDashboard" class="dashboard-btn">
+                📊 View Dashboard
+            </button>
+            <button id="refreshStatus" class="refresh-btn">
+                🔄 Refresh
+            </button>
+        </div>
+
+        <div class="footer">
+            <p>Tracking Google Meet sessions automatically</p>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
