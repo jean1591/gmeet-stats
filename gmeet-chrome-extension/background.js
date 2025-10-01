@@ -83,11 +83,10 @@ async function handleMeetTabsFound() {
 
   if (!result.currentSessionId) {
     // Start new session
-    const newSessionId = generateUUID();
-    await startNewSession(userUUID, newSessionId, now);
+    await startNewSession(userUUID, now);
   } else {
     // Update existing session
-    await updateSession(userUUID, result.currentSessionId, now);
+    await updateSession(result.currentSessionId, now);
   }
 }
 
@@ -97,18 +96,16 @@ async function handleNoMeetTabs() {
 
   if (result.currentSessionId) {
     // End current session
-    const userUUID = await getUserUUID();
     const now = new Date().toISOString();
-    await endSession(userUUID, result.currentSessionId, now);
+    await endSession(result.currentSessionId, now);
   }
 }
 
 // Start a new session
-async function startNewSession(userUUID, sessionId, timestamp) {
+async function startNewSession(userUUID, timestamp) {
   try {
     const sessionData = {
-      uuid: userUUID,
-      session_id: sessionId,
+      user_id: userUUID,
       start_time: timestamp,
       end_time: timestamp
     };
@@ -122,11 +119,12 @@ async function startNewSession(userUUID, sessionId, timestamp) {
     });
 
     if (response.ok) {
+      const createdSession = await response.json();
       await chrome.storage.local.set({
-        currentSessionId: sessionId,
+        currentSessionId: createdSession.id,
         sessionStartTime: timestamp
       });
-      console.log('New session started:', sessionId);
+      console.log('New session started:', createdSession.id);
     } else {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
@@ -136,11 +134,9 @@ async function startNewSession(userUUID, sessionId, timestamp) {
 }
 
 // Update existing session
-async function updateSession(userUUID, sessionId, timestamp) {
+async function updateSession(sessionId, timestamp) {
   try {
     const sessionData = {
-      uuid: userUUID,
-      session_id: sessionId,
       end_time: timestamp
     };
 
@@ -163,11 +159,9 @@ async function updateSession(userUUID, sessionId, timestamp) {
 }
 
 // End current session
-async function endSession(userUUID, sessionId, timestamp) {
+async function endSession(sessionId, timestamp) {
   try {
     const sessionData = {
-      uuid: userUUID,
-      session_id: sessionId,
       end_time: timestamp
     };
 
