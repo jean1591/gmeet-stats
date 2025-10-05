@@ -1,4 +1,7 @@
-const API_BASE_URL = 'http://127.0.0.1:3000/sessions';
+// API Configuration - Toggle between DEV and PROD
+const API_BASE_URL = 'http://127.0.0.1:3000/sessions';  // DEV (local)
+// const API_BASE_URL = 'https://api.stats.rb2.fr/sessions';  // PROD (production)
+
 const MEET_URL_PATTERN = /^https:\/\/meet\.google\.com\/.*/;
 const CHECK_INTERVAL = 1; // minutes
 

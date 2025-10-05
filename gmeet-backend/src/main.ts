@@ -7,7 +7,13 @@ async function bootstrap() {
 
   // Enable CORS for browser extension and future frontend
   app.enableCors({
-    origin: '*', // TODO: Configure specific origins in production
+    origin: [
+      /^chrome-extension:\/\/.*$/,  // Chrome/Brave extensions
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'https://api.stats.rb2.fr',
+      'https://stats.rb2.fr',  // Future frontend
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: false,
   });
