@@ -1,6 +1,6 @@
 // API Configuration - Toggle between DEV and PROD
-const API_BASE_URL = 'http://127.0.0.1:3000/sessions';  // DEV (local)
-// const API_BASE_URL = 'https://api.stats.rb2.fr/sessions';  // PROD (production)
+// const API_BASE_URL = 'http://127.0.0.1:3000/sessions';  // DEV (local)
+const API_BASE_URL = 'https://api.stats.rb2.fr/sessions';  // PROD (production)
 
 const MEET_URL_PATTERN = /^https:\/\/meet\.google\.com\/.*/;
 const CHECK_INTERVAL = 1; // minutes
@@ -20,7 +20,6 @@ async function getUserUUID() {
   if (!result.userUUID) {
     const newUUID = generateUUID();
     await chrome.storage.sync.set({ userUUID: newUUID });
-    console.log('Generated new user UUID:', newUUID);
     return newUUID;
   }
   return result.userUUID;
@@ -28,11 +27,9 @@ async function getUserUUID() {
 
 // Initialize extension on install
 chrome.runtime.onInstalled.addListener(async () => {
-  console.log('Google Meet Time Tracker installed');
 
   // Ensure user UUID exists
   const userUUID = await getUserUUID();
-  console.log('Using user UUID:', userUUID);
 
   // Set up recurring alarm for tab checking
   chrome.alarms.create('checkMeetTabs', {
@@ -63,8 +60,6 @@ async function checkMeetTabs() {
   try {
     const tabs = await chrome.tabs.query({});
     const meetTabs = tabs.filter(tab => MEET_URL_PATTERN.test(tab.url));
-
-    console.log(`Found ${meetTabs.length} Google Meet tabs`);
 
     if (meetTabs.length > 0) {
       await handleMeetTabsFound();
@@ -127,7 +122,6 @@ async function startNewSession(userUUID, timestamp) {
         currentSessionId: createdSession.id,
         sessionStartTime: timestamp
       });
-      console.log('New session started:', createdSession.id);
     } else {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
@@ -151,9 +145,7 @@ async function updateSession(sessionId, timestamp) {
       body: JSON.stringify(sessionData)
     });
 
-    if (response.ok) {
-      console.log('Session updated:', sessionId, 'end_time:', timestamp);
-    } else {
+    if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
   } catch (error) {
@@ -178,7 +170,6 @@ async function endSession(sessionId, timestamp) {
 
     if (response.ok) {
       await chrome.storage.local.remove(['currentSessionId', 'sessionStartTime']);
-      console.log('Session ended:', sessionId);
     } else {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }

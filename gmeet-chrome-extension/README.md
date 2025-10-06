@@ -33,9 +33,9 @@ Before using the extension, update the API endpoints in:
 ├── popup.css             # Popup styling
 ├── popup.js              # Popup functionality
 └── icons/                # Extension icons
-    ├── icon16.png
-    ├── icon48.png
-    └── icon128.png
+    ├── icon16.jpeg
+    ├── icon48.jpeg
+    └── icon128.jpeg
 ```
 
 ## API Integration
