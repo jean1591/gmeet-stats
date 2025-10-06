@@ -1,4 +1,4 @@
-const DASHBOARD_BASE_URL = 'https://yourapp.com/dashboard';
+const DASHBOARD_BASE_URL = 'https://stats.rb2.fr';
 
 // DOM elements
 const statusDot = document.getElementById('statusDot');
