@@ -6,16 +6,17 @@ import { useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { format, startOfYear, endOfYear, eachDayOfInterval, getDay } from "date-fns"
 
-interface Session {
-  start_time: string
+interface DailyStats {
+  date: string
+  sessionCount: number
   duration: number
 }
 
 interface YearCalendarProps {
-  sessions: Session[]
+  dailyStats: DailyStats[]
 }
 
-export function YearCalendar({ sessions }: YearCalendarProps) {
+export function YearCalendar({ dailyStats }: YearCalendarProps) {
   const [hoveredDay, setHoveredDay] = useState<{ date: Date; minutes: number } | null>(null)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
@@ -25,19 +26,20 @@ export function YearCalendar({ sessions }: YearCalendarProps) {
     const yearEnd = endOfYear(now)
     const days = eachDayOfInterval({ start: yearStart, end: yearEnd })
 
-    // Group sessions by day
-    const sessionsByDay = new Map<string, number>()
-    sessions.forEach((session) => {
-      const dateKey = format(new Date(session.start_time), "yyyy-MM-dd")
-      sessionsByDay.set(dateKey, (sessionsByDay.get(dateKey) || 0) + session.duration)
+    // Convert dailyStats to a map for quick lookup
+    const statsByDay = new Map<string, number>()
+    dailyStats.forEach((stat) => {
+      // Convert milliseconds to minutes
+      const minutes = Math.round(stat.duration / 1000 / 60)
+      statsByDay.set(stat.date, minutes)
     })
 
     return days.map((day) => {
       const dateKey = format(day, "yyyy-MM-dd")
-      const minutes = sessionsByDay.get(dateKey) || 0
+      const minutes = statsByDay.get(dateKey) || 0
       return { date: day, minutes }
     })
-  }, [sessions])
+  }, [dailyStats])
 
   const getIntensityClass = (minutes: number) => {
     if (minutes === 0) return "bg-muted"

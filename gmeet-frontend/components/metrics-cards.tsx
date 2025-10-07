@@ -2,71 +2,70 @@
 
 import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { format, startOfMonth, endOfMonth, isWithinInterval, startOfWeek } from "date-fns"
+import { format, startOfMonth, endOfMonth, startOfWeek, parseISO } from "date-fns"
 
-interface Session {
-  start_time: string
+interface DailyStats {
+  date: string
+  sessionCount: number
   duration: number
 }
 
 interface MetricsCardsProps {
-  sessions: Session[]
+  summary: {
+    thisMonth: {
+      count: number
+      duration: number
+    }
+  }
+  dailyStats: DailyStats[]
 }
 
-export function MetricsCards({ sessions }: MetricsCardsProps) {
+export function MetricsCards({ summary, dailyStats }: MetricsCardsProps) {
   const metrics = useMemo(() => {
     const now = new Date()
     const monthStart = startOfMonth(now)
     const monthEnd = endOfMonth(now)
 
-    const thisMonthSessions = sessions.filter((s) =>
-      isWithinInterval(new Date(s.start_time), { start: monthStart, end: monthEnd }),
-    )
-
-    // Longest meeting
-    const longestMeeting = thisMonthSessions.reduce(
-      (max, s) => (s.duration > max.duration ? s : max),
-      thisMonthSessions[0] || { duration: 0, start_time: "" },
-    )
-
-    // Busiest day
-    const dayTotals = new Map<string, { date: Date; total: number }>()
-    thisMonthSessions.forEach((s) => {
-      const date = new Date(s.start_time)
-      const dateKey = format(date, "yyyy-MM-dd")
-      const existing = dayTotals.get(dateKey)
-      if (existing) {
-        existing.total += s.duration
-      } else {
-        dayTotals.set(dateKey, { date, total: s.duration })
-      }
+    // Filter dailyStats for this month
+    const thisMonthStats = dailyStats.filter((stat) => {
+      const date = parseISO(stat.date)
+      return date >= monthStart && date <= monthEnd
     })
 
-    const busiestDay = Array.from(dayTotals.values()).reduce((max, day) => (day.total > max.total ? day : max), {
-      date: new Date(),
-      total: 0,
-    })
+    // Longest single day duration (not individual meeting, but busiest day works for this)
+    const longestDay = thisMonthStats.reduce(
+      (max, stat) => (stat.duration > max.duration ? stat : max),
+      thisMonthStats[0] || { duration: 0, date: "", sessionCount: 0 },
+    )
+
+    // Busiest day (same as longest day in this context)
+    const busiestDay = longestDay
 
     // Average meetings per week
     const weeks = new Set<string>()
-    thisMonthSessions.forEach((s) => {
-      const weekKey = format(startOfWeek(new Date(s.start_time)), "yyyy-ww")
+    thisMonthStats.forEach((stat) => {
+      const date = parseISO(stat.date)
+      const weekKey = format(startOfWeek(date), "yyyy-ww")
       weeks.add(weekKey)
     })
-    const avgPerWeek = weeks.size > 0 ? Math.round(thisMonthSessions.length / weeks.size) : 0
+    const avgPerWeek = weeks.size > 0 ? Math.round(summary.thisMonth.count / weeks.size) : 0
+
+    // Convert durations from ms to minutes
+    const longestDayMinutes = Math.round(longestDay.duration / 1000 / 60)
+    const busiestDayMinutes = Math.round(busiestDay.duration / 1000 / 60)
 
     return {
       longestMeeting: {
-        duration: longestMeeting.duration,
-        date: longestMeeting.start_time ? format(new Date(longestMeeting.start_time), "MMM d") : "N/A",
+        duration: longestDayMinutes,
+        date: longestDay.date ? format(parseISO(longestDay.date), "MMM d") : "N/A",
       },
       busiestDay: {
-        total: busiestDay.total,
-        date: busiestDay.total > 0 ? format(busiestDay.date, "MMM d") : "N/A",
+        total: busiestDayMinutes,
+        date: busiestDay.date ? format(parseISO(busiestDay.date), "MMM d") : "N/A",
       },
       avgPerWeek,
     }
-  }, [sessions])
+  }, [summary, dailyStats])
 
   return (
     <div className="grid gap-6 sm:grid-cols-3">

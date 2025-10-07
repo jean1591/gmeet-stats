@@ -1,6 +1,5 @@
 "use client"
 
-import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { format } from "date-fns"
@@ -17,11 +16,8 @@ interface RecentSessionsListProps {
 }
 
 export function RecentSessionsList({ sessions }: RecentSessionsListProps) {
-  const recentSessions = useMemo(() => {
-    return [...sessions]
-      .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
-      .slice(0, 10)
-  }, [sessions])
+  // Sessions are already sorted and limited to 10 by backend
+  const recentSessions = sessions
 
   return (
     <Card>
@@ -47,7 +43,7 @@ export function RecentSessionsList({ sessions }: RecentSessionsListProps) {
                 <TableCell className="text-foreground">{format(new Date(session.start_time), "h:mm a")}</TableCell>
                 <TableCell className="text-foreground">{format(new Date(session.end_time), "h:mm a")}</TableCell>
                 <TableCell className="text-right text-foreground">
-                  {Math.floor(session.duration / 60)}h {session.duration % 60}m
+                  {Math.floor(session.duration / 1000 / 60 / 60)}h {Math.floor((session.duration / 1000 / 60) % 60)}m
                 </TableCell>
               </TableRow>
             ))}

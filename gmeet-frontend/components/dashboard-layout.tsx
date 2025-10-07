@@ -10,13 +10,36 @@ import { RecentSessionsList } from "@/components/recent-sessions-list"
 import { ErrorState } from "@/components/error-state"
 import { EmptyState } from "@/components/empty-state"
 
-interface Session {
+interface DailyStats {
+  date: string
+  sessionCount: number
+  duration: number
+}
+
+interface RecentSession {
   id: string
   user_id: string
   start_time: string
   end_time: string
-  created_at: string
-  updated_at: string
+  duration: number
+}
+
+interface UserStatsData {
+  summary: {
+    totalSessions: number
+    totalDuration: number
+    avgDuration: number
+    thisMonth: {
+      count: number
+      duration: number
+    }
+    thisYear: {
+      count: number
+      duration: number
+    }
+  }
+  dailyStats: DailyStats[]
+  recentSessions: RecentSession[]
 }
 
 interface DashboardLayoutProps {
@@ -26,7 +49,7 @@ interface DashboardLayoutProps {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.stats.rb2.fr'
 
 export function DashboardLayout({ userId }: DashboardLayoutProps) {
-  const [sessions, setSessions] = useState<Session[]>([])
+  const [data, setData] = useState<UserStatsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
@@ -58,8 +81,8 @@ export function DashboardLayout({ userId }: DashboardLayoutProps) {
     })
   }
 
-  // Fetch sessions from API
-  const fetchSessions = async () => {
+  // Fetch stats from API
+  const fetchStats = async () => {
     try {
       setLoading(true)
       setError(null)
@@ -69,18 +92,18 @@ export function DashboardLayout({ userId }: DashboardLayoutProps) {
       if (!response.ok) {
         if (response.status === 404) {
           // User has no sessions yet
-          setSessions([])
+          setData(null)
         } else {
-          throw new Error(`Failed to fetch sessions: ${response.status} ${response.statusText}`)
+          throw new Error(`Failed to fetch stats: ${response.status} ${response.statusText}`)
         }
       } else {
-        const data = await response.json()
-        setSessions(data)
+        const statsData = await response.json()
+        setData(statsData)
       }
 
       setLastUpdated(new Date())
     } catch (err) {
-      console.error('Error fetching sessions:', err)
+      console.error('Error fetching stats:', err)
       setError(err instanceof Error ? err.message : 'Failed to load session data')
     } finally {
       setLoading(false)
@@ -89,25 +112,17 @@ export function DashboardLayout({ userId }: DashboardLayoutProps) {
 
   // Initial load
   useEffect(() => {
-    fetchSessions()
+    fetchStats()
   }, [userId])
 
   // Auto-refresh every hour
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchSessions()
+      fetchStats()
     }, 60 * 60 * 1000) // 1 hour in milliseconds
 
     return () => clearInterval(interval)
   }, [userId])
-
-  // Calculate session durations and enrich data
-  const enrichedSessions = useMemo(() => {
-    return sessions.map((session) => ({
-      ...session,
-      duration: Math.round((new Date(session.end_time).getTime() - new Date(session.start_time).getTime()) / 1000 / 60), // duration in minutes
-    }))
-  }, [sessions])
 
   if (loading) {
     return (
@@ -137,13 +152,13 @@ export function DashboardLayout({ userId }: DashboardLayoutProps) {
             isDarkMode={isDarkMode}
             onToggleDarkMode={toggleDarkMode}
           />
-          <ErrorState error={error} onRetry={fetchSessions} />
+          <ErrorState error={error} onRetry={fetchStats} />
         </div>
       </div>
     )
   }
 
-  if (!loading && sessions.length === 0) {
+  if (!loading && (!data || data.summary.totalSessions === 0)) {
     return (
       <div className="min-h-screen bg-background">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -159,6 +174,11 @@ export function DashboardLayout({ userId }: DashboardLayoutProps) {
     )
   }
 
+  // Safety check: should not happen but prevents crashes
+  if (!data) {
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -170,11 +190,11 @@ export function DashboardLayout({ userId }: DashboardLayoutProps) {
         />
 
         <div className="mt-8 space-y-8">
-          <StatsCards sessions={enrichedSessions} />
-          <YearCalendar sessions={enrichedSessions} />
-          <MonthComparison sessions={enrichedSessions} />
-          <MetricsCards sessions={enrichedSessions} />
-          <RecentSessionsList sessions={enrichedSessions} />
+          <StatsCards summary={data.summary} />
+          <YearCalendar dailyStats={data.dailyStats} />
+          <MonthComparison dailyStats={data.dailyStats} />
+          <MetricsCards summary={data.summary} dailyStats={data.dailyStats} />
+          <RecentSessionsList sessions={data.recentSessions} />
         </div>
       </div>
     </div>

@@ -4,16 +4,17 @@ import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, isToday } from "date-fns"
 
-interface Session {
-  start_time: string
+interface DailyStats {
+  date: string
+  sessionCount: number
   duration: number
 }
 
 interface MonthComparisonProps {
-  sessions: Session[]
+  dailyStats: DailyStats[]
 }
 
-export function MonthComparison({ sessions }: MonthComparisonProps) {
+export function MonthComparison({ dailyStats }: MonthComparisonProps) {
   const chartData = useMemo(() => {
     const now = new Date()
     const currentMonthStart = startOfMonth(now)
@@ -24,19 +25,18 @@ export function MonthComparison({ sessions }: MonthComparisonProps) {
     const currentMonthDays = eachDayOfInterval({ start: currentMonthStart, end: currentMonthEnd })
     const lastMonthDays = eachDayOfInterval({ start: lastMonthStart, end: lastMonthEnd })
 
-    // Group sessions by day
-    const sessionsByDay = new Map<string, number>()
-    sessions.forEach((session) => {
-      const date = new Date(session.start_time)
-      const dateKey = format(date, "yyyy-MM-dd")
-      sessionsByDay.set(dateKey, (sessionsByDay.get(dateKey) || 0) + session.duration)
+    // Convert dailyStats to a map for quick lookup (convert ms to minutes)
+    const statsByDay = new Map<string, number>()
+    dailyStats.forEach((stat) => {
+      const minutes = Math.round(stat.duration / 1000 / 60)
+      statsByDay.set(stat.date, minutes)
     })
 
     const currentMonthData = currentMonthDays.map((day) => {
       const dateKey = format(day, "yyyy-MM-dd")
       return {
         date: day,
-        minutes: sessionsByDay.get(dateKey) || 0,
+        minutes: statsByDay.get(dateKey) || 0,
         isToday: isToday(day),
       }
     })
@@ -45,14 +45,14 @@ export function MonthComparison({ sessions }: MonthComparisonProps) {
       const dateKey = format(day, "yyyy-MM-dd")
       return {
         date: day,
-        minutes: sessionsByDay.get(dateKey) || 0,
+        minutes: statsByDay.get(dateKey) || 0,
       }
     })
 
     const maxMinutes = Math.max(...currentMonthData.map((d) => d.minutes), ...lastMonthData.map((d) => d.minutes), 1)
 
     return { currentMonthData, lastMonthData, maxMinutes }
-  }, [sessions])
+  }, [dailyStats])
 
   return (
     <Card>
