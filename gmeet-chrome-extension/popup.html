@@ -8,6 +8,11 @@
 </head>
 <body>
     <div class="container">
+        <div id="firstDayBanner" class="first-day-banner" style="display: none;">
+            <span class="banner-text">Already have an account? Paste your existing user ID...</span>
+            <button id="dismissBanner" class="dismiss-banner-btn" aria-label="Dismiss">✖️</button>
+        </div>
+
         <div class="header">
             <img src="icons/icon48.jpeg" alt="Meet Tracker" class="logo">
             <h1>Meet Time Tracker</h1>
@@ -31,7 +36,16 @@
             </div>
             <div class="stat-item">
                 <label>User ID:</label>
-                <span id="userId">--</span>
+                <div id="userIdContainer" class="user-id-container">
+                    <span id="userId" class="user-id-display">--</span>
+                    <button id="copyUserId" class="icon-btn" aria-label="Copy" title="Copy full UUID">📋</button>
+                    <button id="editUserId" class="icon-btn" aria-label="Edit" title="Edit UUID">✏️</button>
+                </div>
+                <div id="userIdEditMode" class="user-id-edit-mode" style="display: none;">
+                    <input type="text" id="userIdInput" class="user-id-input" placeholder="Paste your UUID here">
+                    <button id="saveUserId" class="icon-btn" aria-label="Save" title="Save">💾</button>
+                    <button id="cancelEditUserId" class="icon-btn" aria-label="Cancel" title="Cancel">✖️</button>
+                </div>
             </div>
         </div>
 
